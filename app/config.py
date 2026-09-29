@@ -35,7 +35,13 @@ class Settings(BaseSettings):
 
     # 检索
     retrieval_top_k: int = 5
-    retrieval_min_score: float = 0.05
+    retrieval_min_score: float = 0.05          # local-hash 嵌入的分数阈值
+    retrieval_min_score_semantic: float = 0.33  # embedding-3 实测：无关题封顶0.295 / 相关top2最低0.374，取中间
+
+    @property
+    def effective_min_score(self) -> float:
+        """阈值随嵌入模型自适应：两族模型的分数尺度不可比。"""
+        return self.retrieval_min_score_semantic if self.embedding_provider == "openai" else self.retrieval_min_score
 
     # App
     app_host: str = "0.0.0.0"

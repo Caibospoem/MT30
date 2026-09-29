@@ -53,6 +53,7 @@ def main() -> None:
     print(f"  扫描 {stats['scanned']} 个提交: 新增 {stats['new']} / merge跳过 {stats['skipped_merge']} / "
           f"噪声跳过 {stats['skipped_noise']} / 分析失败 {stats['failed']}")
     print(f"  → 生成待确认知识条目 {len(stats['entry_ids'])} 个: {stats['entry_ids']}")
+    db.commit()  # 条目落库：否则进程退出即回滚，跨进程工具（探针/API）看不到数据
 
     sep("STEP 3 · 查看待确认条目（人审工作台视角）")
     for eid in stats["entry_ids"]:
@@ -68,6 +69,7 @@ def main() -> None:
         entry = ksvc.confirm_entry(db, eid, reviewed_by="zhang.san", comment="demo 自动确认")
         confirmed_ids.append(entry.id)
         print(f"  entry {entry.id} → {entry.status} (v{entry.version}) 已向量化")
+    db.commit()  # 确认状态落库：与向量库保持一致
 
     sep("STEP 5 · 新需求检索（自然语言 → 历史相似提交）")
     queries = [
@@ -81,6 +83,7 @@ def main() -> None:
         print(f"  延迟 {r['latency_ms']}ms, 命中 {r['total']} 条:")
         for h in r["hits"]:
             print(f"    - entry {h['entry_id']} (score={h['score']}) {h['summary'][:44]}…")
+    db.commit()  # 检索日志落库：RetrievalLog 是评测命中率的数据底座
 
     sep("STEP 6 · 统计")
     from app.api.routes import stats as _stats  # 复用统计逻辑

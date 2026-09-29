@@ -1,7 +1,7 @@
 """分析模块测试：mock 引擎输出合法 Schema。"""
 import pytest
 
-from app.analysis.analyzer import AnalysisError, TAG_ENUM, analyze_commit
+from app.analysis.analyzer import AnalysisError, TAG_ENUM, _as_list, _validate, analyze_commit
 from app.config import get_settings
 from tests.collector_fixtures import make_raw_commit
 
@@ -37,3 +37,25 @@ def test_noise_only_commit_rejected():
     commit = make_raw_commit(files={"web/package-lock.json": "+locked"})
     with pytest.raises(AnalysisError):
         analyze_commit(commit, get_settings())
+
+
+def test_as_list_coerces_llm_string_drift():
+    """glm-4-flash 偶发把数组输出成字符串，必须收敛而不是逐字迭代。"""
+    assert _as_list("order") == ["order"]
+    assert _as_list("配置、性能") == ["配置", "性能"]
+    assert _as_list(["数据库"]) == ["数据库"]
+    assert _as_list(None) == []
+    assert _as_list({"a": "order"}) == ["order"]
+
+
+def test_validate_survives_string_drift():
+    """真实事故：modules/tags 被模型输出为字符串 → 单字符数组/标签全空。"""
+    raw = {
+        "summary": "新增订单导出接口",
+        "modules": "order",
+        "tags": "接口、性能、权限",
+        "risk_note": "-",
+    }
+    result = _validate(raw)
+    assert result["modules"] == ["order"]
+    assert set(result["tags"]) == {"接口", "性能", "权限"}

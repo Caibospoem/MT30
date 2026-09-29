@@ -1,0 +1,26 @@
+# ── 环境与密钥（安全红线：.env 含 API Key，绝不入库）──
+.env
+.env.local
+*.key
+
+# ── 运行时产物（可随时重建：make_demo_repo / demo_m1 / demo_m2）──
+data/
+probe_*.txt
+
+# ── Python ──
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.venv/
+venv/
+
+# ── IDE / 操作系统 ──
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

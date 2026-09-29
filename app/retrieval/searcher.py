@@ -33,7 +33,7 @@ def search(session: Session, repo_id: int, query: str, top_k: int | None = None,
 
     hits = []
     for chunk, score in raw_hits:
-        if score < settings.retrieval_min_score:  # 阈值过滤：低于阈值的弱相关不返回
+        if score < settings.effective_min_score:  # 阈值随嵌入模型自适应：低于阈值的弱相关不返回
             continue
         entry = session.get(KnowledgeEntry, int(chunk.doc_id))
         if not entry or entry.status != "confirmed":
